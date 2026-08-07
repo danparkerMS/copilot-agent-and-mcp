@@ -111,4 +111,29 @@ describe('Favorites API', () => {
       .send({ bookId: '1' });
     expect(res.statusCode).toBe(401);
   });
+
+  it('DELETE /api/favorites should remove a favorite and allow it to be re-added', async () => {
+    const token = getToken('sandra');
+    const users = JSON.parse(fs.readFileSync(usersFile, 'utf-8'));
+    const sandra = users.find(u => u.username === 'sandra');
+    const favoriteId = sandra.favorites[0];
+
+    const removeRes = await request(app)
+      .delete('/api/favorites')
+      .set('Authorization', 'Bearer ' + token)
+      .send({ bookId: favoriteId });
+
+    expect(removeRes.statusCode).toBe(200);
+    expect(JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+      .find(u => u.username === 'sandra').favorites).not.toContain(favoriteId);
+
+    const addRes = await request(app)
+      .post('/api/favorites')
+      .set('Authorization', 'Bearer ' + token)
+      .send({ bookId: favoriteId });
+
+    expect(addRes.statusCode).toBe(200);
+    expect(JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+      .find(u => u.username === 'sandra').favorites).toContain(favoriteId);
+  });
 });
