@@ -6,6 +6,7 @@ import { store } from './store';
 import Header from './components/Header';
 import Welcome from './components/Welcome';
 import BookList from './components/BookList';
+import BookDetail from './components/BookDetail';
 import Favorites from './components/Favorites';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Welcome />} />
           <Route path="/books" element={<BookList />} />
+          <Route path="/books/:bookId" element={<BookDetail />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

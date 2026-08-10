@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchFavorites, removeFavorite } from '../store/favoritesSlice';
 import { useNavigate } from 'react-router-dom';
@@ -9,8 +9,53 @@ const Favorites = () => {
   const status = useAppSelector(state => state.favorites.status);
   const token = useAppSelector(state => state.user.token);
   const navigate = useNavigate();
+  const [shareFeedback, setShareFeedback] = useState({});
   const handleRemoveFavorite = bookId => {
     dispatch(removeFavorite({ token, bookId }));
+  };
+
+  const copyShareLink = async shareUrl => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareUrl);
+      return;
+    }
+
+    const textArea = document.createElement('textarea');
+    textArea.value = shareUrl;
+    textArea.setAttribute('readonly', '');
+    textArea.style.position = 'absolute';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    if (!copied) {
+      throw new Error('Copy failed');
+    }
+  };
+
+  const handleShareFavorite = async book => {
+    const shareUrl = new URL(`/books/${encodeURIComponent(book.id)}`, window.location.origin).toString();
+    const shareData = {
+      title: book.title,
+      text: `Check out "${book.title}" by ${book.author}.`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setShareFeedback({ [book.id]: { type: 'success', message: 'Share sheet opened.' } });
+      } else {
+        await copyShareLink(shareUrl);
+        setShareFeedback({ [book.id]: { type: 'success', message: 'Share link copied.' } });
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+      setShareFeedback({ [book.id]: { type: 'error', message: 'Unable to share this book.' } });
+    }
   };
 
   useEffect(() => {
@@ -48,9 +93,17 @@ const Favorites = () => {
           {favorites.map(book => (
             <li key={book.id}>
               <strong>{book.title}</strong> by {book.author}
+              <button type="button" onClick={() => handleShareFavorite(book)} aria-label={`Share ${book.title}`}>
+                Share
+              </button>
               <button type="button" onClick={() => handleRemoveFavorite(book.id)}>
                 Remove from Favorites
               </button>
+              {shareFeedback[book.id] && (
+                <span role="status" style={{ marginLeft: '0.5rem' }}>
+                  {shareFeedback[book.id].message}
+                </span>
+              )}
             </li>
           ))}
         </ul>

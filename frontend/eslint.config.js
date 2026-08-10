@@ -30,4 +30,14 @@ export default [
       ],
     },
   },
+  {
+    files: ['cypress/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.mocha,
+        cy: 'readonly',
+        expect: 'readonly',
+      },
+    },
+  },
 ]
