@@ -22,6 +22,23 @@ describe('Books API', () => {
     expect(res.body.length).toBeGreaterThan(0);
   });
 
+  it('GET /api/books/:bookId should return a single public book', async () => {
+    const listRes = await request(app).get('/api/books');
+    const [book] = listRes.body;
+
+    const res = await request(app).get(`/api/books/${book.id}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(book);
+    expect(res.body.favorites).toBeUndefined();
+  });
+
+  it('GET /api/books/:bookId should return 404 for unknown books', async () => {
+    const res = await request(app).get('/api/books/not-a-book');
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ message: 'Book not found' });
+  });
+
   it('POST /api/books should not be allowed', async () => {
     const res = await request(app)
       .post('/api/books')
